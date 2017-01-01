@@ -24,9 +24,47 @@ def search_episode_by_filename(filename):
     searchname = re.sub(r"Tatort", '', basename)
 
     # Find match
-    (matching_title, matching_probability) = process.extractOne(searchname,
-                                                                tatort_titles)
-    matching_episode = tatort_episodes[tatort_titles.index(matching_title)]
+    match_results = process.extractBests(searchname, tatort_titles,
+                                         score_cutoff = 60, limit = 5)
+
+    # no match was found
+    if match_results == None:
+        print("No match was found for file {}".format(filename))
+        return
+
+    # only one match was found with the minimum required score
+    matching_episode = None
+    if len(match_results) == 1:
+        chosen_result = match_results[0]
+
+    # multiple matches were found above the score threshold: ask the user
+    # which one is right
+    if len(match_results) > 1:
+        if match_results[0][1] - match_results[1][1] > 10:
+            # if choice 0 is 10 points more likely than choice 1, we directly
+            # use the first choice
+            chosen_result = match_results[0]
+        else:
+            # print choices
+            print("Multiple matches were found for file {}".format(filename))
+            print("Please choose the correct one from the list below.")
+            for index, match_result in enumerate(match_results):
+                (matching_title, matching_score, matching_id) = match_result
+                episode = tatort_episodes[matching_id]
+                print("{index}: {name} (score: {score:02d}/100)".format(
+                    index = index, name = episode['episodename'],
+                    score = matching_score))
+
+            # let user choose
+            chosen_id = int(input('Your choice: '))
+            # FIXME: repeat on wrong inputs
+
+            chosen_result = match_results[chosen_id]
+
+
+    # get the TVDB episode object
+    (matching_title, matching_score, matching_id) = chosen_result
+    matching_episode = tatort_episodes[matching_id]
 
     # build new file name
     try:
@@ -54,14 +92,25 @@ if __name__ == "__main__":
     t = tvdb_api.Tvdb(language='de')
     show = t['Tatort']
 
-    # Build an array of all show titles
-    tatort_titles = []
-    tatort_episodes = []
+    # Build a dict of all show titles, indexed by the TVDB episode ID
+    # Note: we need to use dicts here and not lists, as fuzzywuzzy only returns
+    # the matching ID when using a dict, not a list.
+    tatort_episodes = {}
+    tatort_titles = {}
     for cur_season in show.values():
         for cur_episode in cur_season.values():
+            episode_id = cur_episode['id']
+
+            # Prepare the title string used for matching the filename
+            # We filter the title as we get it from TVDB to contain only the
+            # title. Example:
+            # "Episode 2016x39 - Janneke & Brix - 05 - Land in dieser Zeit"
+            # becomes
+            # "Land in dieser Zeit".
             episode_title = re.sub(r"^(.+) - (.+) - (.+)$", "\\3",
                                    cur_episode['episodename'])
-            tatort_titles.append(episode_title)
-            tatort_episodes.append(cur_episode)
+
+            tatort_episodes[episode_id] = cur_episode
+            tatort_titles[episode_id] = episode_title
 
     main()
