@@ -16,6 +16,9 @@ from fuzzywuzzy import process
 import os
 import re
 
+# Show ID of the Tatort series on tvdb.com
+TVDB_TATORT_SHOW_ID = 83214
+
 def search_episode_by_filename(filename):
     # Split out file extension
     basename, extension = os.path.splitext(filename)
@@ -90,7 +93,7 @@ def main():
 
 if __name__ == "__main__":
     t = tvdb_api.Tvdb(language='de')
-    show = t['Tatort']
+    show = t[TVDB_TATORT_SHOW_ID]
 
     # Build a dict of all show titles, indexed by the TVDB episode ID
     # Note: we need to use dicts here and not lists, as fuzzywuzzy only returns
