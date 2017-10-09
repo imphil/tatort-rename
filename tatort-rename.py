@@ -31,7 +31,7 @@ def search_episode_by_filename(filename):
                                          score_cutoff = 60, limit = 5)
 
     # no match was found
-    if match_results == None:
+    if not match_results:
         print("No match was found for file {}".format(filename))
         return
 
