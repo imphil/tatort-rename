@@ -43,8 +43,8 @@ def search_episode_by_filename(filename):
     # multiple matches were found above the score threshold: ask the user
     # which one is right
     if len(match_results) > 1:
-        if match_results[0][1] - match_results[1][1] > 10:
-            # if choice 0 is 10 points more likely than choice 1, we directly
+        if match_results[0][1] - match_results[1][1] > 20:
+            # if choice 0 is 20 points more likely than choice 1, we directly
             # use the first choice
             chosen_result = match_results[0]
         else:
@@ -64,8 +64,6 @@ def search_episode_by_filename(filename):
 
             chosen_result = match_results[chosen_id]
 
-
-    # get the TVDB episode object
     (matching_title, matching_score, matching_id) = chosen_result
     matching_episode = tatort_episodes[matching_id]
 
